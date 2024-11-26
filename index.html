@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIP Calculator - By Bhagyawant</title> <!-- Updated Title -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100%;
+            padding: 20px 0;
+            overflow-y: auto; /* Allow scrolling */
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px; /* Max width for large screens */
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%; /* Make button full width on smaller screens */
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .result-container {
+            margin-top: 20px;
+        }
+        .summary {
+            margin-top: 20px;
+        }
+        .summary p {
+            font-size: 16px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+        /* Make table scrollable horizontally on small screens */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h2 {
+                font-size: 20px;
+            }
+            input, button {
+                padding: 10px;
+                font-size: 14px;
+            }
+            button {
+                width: 100%; /* Button takes full width on small screens */
+            }
+            .summary p {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            input, button {
+                font-size: 16px;
+            }
+            .chart-container {
+                height: 250px; /* Reduce chart height on small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>SIP Calculator - By Bhagyawant</h2>
+        
+        <!-- User Inputs -->
+        <input type="number" id="investmentAmount" placeholder="Enter Monthly Investment" />
+        <input type="number" id="annualReturn" placeholder="Enter Expected Annual Return (%)" />
+        <input type="number" id="years" placeholder="Enter Investment Tenure (Years)" />
+        
+        <button onclick="calculateSIP()">Calculate SIP</button>
+
+        <!-- Investment Summary -->
+        <div class="summary" id="investment-summary"></div>
+
+        <!-- Pie Chart Container -->
+        <div class="chart-container">
+            <canvas id="investmentChart"></canvas>
+        </div>
+
+        <!-- Result Table (Wrapped for horizontal scroll) -->
+        <div class="table-wrapper">
+            <div class="result-container" id="result-container"></div>
+        </div>
+    </div>
+
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        function calculateSIP() {
+            // Get user inputs
+            let monthlyInvestment = parseFloat(document.getElementById('investmentAmount').value);
+            let annualReturn = parseFloat(document.getElementById('annualReturn').value);
+            let years = parseInt(document.getElementById('years').value);
+
+            if (isNaN(monthlyInvestment) || isNaN(annualReturn) || isNaN(years) || monthlyInvestment <= 0 || annualReturn <= 0 || years <= 0) {
+                alert("Please enter valid input values.");
+                return;
+            }
+
+            // Convert annual return percentage to monthly return rate
+            let monthlyReturnRate = (annualReturn / 100) / 12;
+
+            let totalInvested = 0;
+            let totalValue = 0;
+            let totalReturns = 0;
+
+            let resultHTML = `
+                <h3>Investment Overview</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Total Investment (₹)</th>
+                            <th>Total Value (₹)</th>
+                            <th>Return (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            // Calculate SIP over each year
+            for (let year = 1; year <= years; year++) {
+                let yearInvestment = monthlyInvestment * 12 * year;
+                let yearValue = 0;
+                let accumulatedValue = 0;
+
+                for (let month = 1; month <= year * 12; month++) {
+                    accumulatedValue += monthlyInvestment;
+                    accumulatedValue += accumulatedValue * monthlyReturnRate;
+                }
+                
+                // Total value at the end of the year
+                totalValue = accumulatedValue;
+                totalInvested = yearInvestment;
+                totalReturns = totalValue - totalInvested;
+
+                resultHTML += `
+                    <tr>
+                        <td>${year}</td>
+                        <td>${yearInvestment.toFixed(2)}</td>
+                        <td>${totalValue.toFixed(2)}</td>
+                        <td>${totalReturns.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+
+            resultHTML += "</tbody></table>";
+            document.getElementById("result-container").innerHTML = resultHTML;
+
+            // Display investment summary
+            let summaryHTML = `
+                <h3>Investment Summary</h3>
+                <p><strong>Total Investment:</strong> ₹${totalInvested.toFixed(2)}</p>
+                <p><strong>Final Amount:</strong> ₹${totalValue.toFixed(2)}</p>
+                <p><strong>Profit:</strong> ₹${totalReturns.toFixed(2)}</p>
+            `;
+            document.getElementById("investment-summary").innerHTML = summaryHTML;
+
+            // Generate Pie Chart
+            let ctx = document.getElementById('investmentChart').getContext('2d');
+            let chart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Total Investment', 'Total Profit'],
+                    datasets: [{
+                        data: [totalInvested, totalReturns],
+                        backgroundColor: ['#36a2eb', '#ff6384'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return tooltipItem.label + ': ₹' + tooltipItem.raw.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
